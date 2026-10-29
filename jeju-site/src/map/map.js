@@ -32,7 +32,7 @@ const waterTex = (() => {
   for (let i = 0; i < 26; i++) { const x = Math.random() * 256, y = Math.random() * 256; g.beginPath(); g.arc(x, y, 6 + Math.random() * 12, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); }
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(70, 70); t.colorSpace = THREE.SRGBColorSpace; return t;
 })();
-const water = new THREE.Mesh(new THREE.PlaneGeometry(520, 520), new THREE.MeshStandardMaterial({ map: waterTex, transparent: true, opacity: 0.78, roughness: 0.25, metalness: 0.1 }));
+const water = new THREE.Mesh(new THREE.PlaneGeometry(520, 520), new THREE.MeshStandardMaterial({ map: waterTex, transparent: true, opacity: 0.94, roughness: 0.25, metalness: 0.1 }));
 water.rotation.x = -Math.PI / 2; water.position.y = 0.012; scene.add(water);
 
 // ---------- 레이어 ----------
@@ -143,8 +143,9 @@ async function loadVisitors() {
     const years = [...new Set(viz.rows.map(r => r.y))];
     viz.maxMonth = Math.max(1, ...viz.rows.flatMap(r => keys.map(k => r.v[k])));
     viz.maxYear = Math.max(1, ...years.flatMap(y => keys.map(k => viz.rows.filter(r => r.y === y).reduce((s, r) => s + r.v[k], 0))));
-    viz.year = years[years.length - 1]; viz.month = 0;
-    $('#viz-year').innerHTML = years.map(y => `<option value="${y}">${y}년</option>`).join(''); $('#viz-year').value = viz.year;
+    const monthsOf = y => viz.rows.filter(r => r.y === y).length, full = years.filter(y => monthsOf(y) >= 12);
+    viz.year = (full.length ? full : years).slice(-1)[0]; viz.month = 0; // 12개월이 다 있는 가장 최근 연도부터 보여줘요
+    $('#viz-year').innerHTML = years.map(y => `<option value="${y}">${y}년${monthsOf(y) < 12 ? ` (${monthsOf(y)}개월)` : ''}</option>`).join(''); $('#viz-year').value = viz.year;
     $('#viz-month').innerHTML = '<option value="0">연간 합계</option>' + Array.from({ length: 12 }, (_, i) => `<option value="${i + 1}">${i + 1}월</option>`).join('');
     $('#viz-year').onchange = e => { viz.year = +e.target.value; refreshBars(); };
     $('#viz-month').onchange = e => { viz.month = +e.target.value; refreshBars(); };

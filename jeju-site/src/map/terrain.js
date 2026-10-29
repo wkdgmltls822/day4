@@ -73,7 +73,8 @@ export function buildTerrain(dem) {
     pos[k] = (c - w / 2) * pxKm; pos[k + 1] = world.yOfM(e); pos[k + 2] = (r - h / 2) * pxKm;
     let rgb;
     if (e > 0.5) rgb = landColor(e, hash(c, r));
-    else { const d = Math.min(1, -e / 70); rgb = [lerp(0.30, 0.04, d), lerp(0.62, 0.20, d), lerp(0.80, 0.42, d)]; }
+    // 바다 밑바닥: 깊어져도 너무 어두워지지 않게 해서 지형 바깥의 바다 평면과 경계가 티 나지 않게 한다
+    else { const d = Math.min(1, -e / 60); rgb = [lerp(0.38, 0.17, d), lerp(0.80, 0.52, d), lerp(0.88, 0.80, d)]; }
     col[k] = rgb[0]; col[k + 1] = rgb[1]; col[k + 2] = rgb[2];
   }
   for (let j = 0; j < gh - 1; j++) for (let i = 0; i < gw - 1; i++) {
