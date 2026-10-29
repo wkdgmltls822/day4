@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="감귤이와 돌하르방이 반겨주는 제주 IP 사이트" />
+  <title>제주 감귤이 월드 🍊</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="notice" class="notice hidden"></div>
+
+  <header class="nav">
+    <a class="logo" href="#top">🍊 제주 감귤이 월드</a>
+    <nav class="links">
+      <a href="#ip">캐릭터</a>
+      <a href="#gallery">갤러리</a>
+      <a href="#lounge">내 보관함</a>
+    </nav>
+    <div id="auth-area"></div>
+  </header>
+
+  <main id="top">
+    <section class="hero" id="hero">
+      <div class="hero-inner">
+        <p class="eyebrow">JEJU ISLAND CHARACTER WORLD</p>
+        <h1>제주의 바람, 바다, 그리고<br /><span class="grad">감귤이</span>를 만나요!</h1>
+        <p class="lead">한라산을 오르고, 유채꽃밭을 달리고, 돌하르방과 인사하는 제주 이야기 친구들.</p>
+        <div class="hero-cta">
+          <a class="btn primary" href="#gallery">갤러리 구경하기</a>
+          <button class="btn ghost" id="hero-join">회원가입 하고 사진 모으기</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="ip" class="section">
+      <h2>🌟 제주 친구들</h2>
+      <p class="sub">제주를 지키고 알리는 네 명의 캐릭터를 소개해요.</p>
+      <div class="cards" id="cards"></div>
+    </section>
+
+    <section id="gallery" class="section alt">
+      <h2>📸 제주 갤러리</h2>
+      <p class="sub">Pixabay 의 멋진 사진들이에요. 로그인하면 ♥ 로 보관할 수 있어요.</p>
+      <div class="tabs" id="tabs"></div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+    <section id="lounge" class="section">
+      <h2>💛 내 보관함</h2>
+      <div id="lounge-guest" class="lounge-guest">
+        <p>로그인하면 마음에 드는 제주 사진을 ♥ 로 모아둘 수 있어요.</p>
+        <button class="btn primary" id="lounge-login">로그인 / 회원가입</button>
+      </div>
+      <div id="lounge-member" class="hidden">
+        <p class="sub" id="welcome"></p>
+        <p class="note" id="lounge-note"></p>
+        <div class="grid" id="fav-grid"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>이미지 제공: <a href="https://pixabay.com" target="_blank" rel="noopener">Pixabay</a> · 각 사진의 작가 링크는 사진 아래에서 확인하세요.</p>
+    <p>제주 감귤이 월드 · Vite + Supabase + Vercel</p>
+  </footer>
+
+  <dialog id="auth-dialog">
+    <form id="auth-form" method="dialog" autocomplete="on">
+      <div class="seg">
+        <button type="button" data-mode="login" class="on">로그인</button>
+        <button type="button" data-mode="signup">회원가입</button>
+      </div>
+      <label class="nick-row hidden">닉네임
+        <input name="nickname" type="text" maxlength="20" placeholder="감귤러버" autocomplete="nickname" />
+      </label>
+      <label>이메일
+        <input name="email" type="email" required placeholder="you@example.com" autocomplete="email" />
+      </label>
+      <label>비밀번호 <small>(6자 이상)</small>
+        <input name="password" type="password" required minlength="6" placeholder="••••••" autocomplete="current-password" />
+      </label>
+      <p class="msg" id="auth-msg" role="alert"></p>
+      <div class="row">
+        <button type="submit" class="btn primary" id="auth-submit">로그인</button>
+        <button type="button" class="btn ghost dark" id="auth-cancel">닫기</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="lightbox" class="lightbox hidden"><img alt="" /></div>
+  <div id="toast" class="toast hidden"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
