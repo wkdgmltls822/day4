@@ -15,9 +15,11 @@
     <a class="logo" href="#top">🍊 제주 감귤이 월드</a>
     <nav class="links">
       <a href="#ip">캐릭터</a>
+      <a href="#shop">샵</a>
       <a href="#gallery">갤러리</a>
       <a href="#lounge">내 보관함</a>
     </nav>
+    <button id="cart-btn" class="cart-btn" title="장바구니">🛒<span id="cart-count">0</span></button>
     <div id="auth-area"></div>
   </header>
 
@@ -38,6 +40,12 @@
       <h2>🌟 제주 친구들</h2>
       <p class="sub">제주를 지키고 알리는 네 명의 캐릭터를 소개해요.</p>
       <div class="cards" id="cards"></div>
+    </section>
+
+    <section id="shop" class="section">
+      <h2>🛍️ 감귤이 샵</h2>
+      <p class="sub">제주 친구들 굿즈예요. 로그인하고 🛒 에 담아 보세요. (데모 상점이라 결제는 연결돼 있지 않아요)</p>
+      <div class="products" id="products"></div>
     </section>
 
     <section id="gallery" class="section alt">
@@ -88,6 +96,18 @@
       </div>
     </form>
   </dialog>
+
+  <div id="cart-overlay" class="overlay hidden"></div>
+  <aside id="cart-drawer" class="drawer" aria-label="장바구니">
+    <div class="drawer-head"><h3>🛒 장바구니</h3><button id="cart-close" class="x" aria-label="닫기">✕</button></div>
+    <p class="note" id="cart-note"></p>
+    <div id="cart-list" class="cart-list"></div>
+    <div class="cart-foot">
+      <div class="total"><span>합계</span><b id="cart-total">₩0</b></div>
+      <button class="btn primary" id="checkout">주문하기 (데모)</button>
+      <button class="btn ghost dark small" id="cart-clear">장바구니 비우기</button>
+    </div>
+  </aside>
 
   <div id="lightbox" class="lightbox hidden"><img alt="" /></div>
   <div id="toast" class="toast hidden"></div>

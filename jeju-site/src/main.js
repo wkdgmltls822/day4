@@ -103,7 +103,7 @@ function renderAuthArea() {
 
 async function setUser(u) {
   user = u; renderAuthArea();
-  await loadFavs();
+  await Promise.all([loadFavs(), loadCart()]);
 }
 
 // ---------- 즐겨찾기 (Supabase DB) ----------
@@ -125,6 +125,78 @@ async function toggleFav(img) {
   if (error) { toast('저장하지 못했어요. SETUP.md 의 SQL 을 실행했는지 확인해 주세요.'); return; }
   toast(had ? '보관함에서 뺐어요' : '보관함에 담았어요 ♥');
   await loadFavs();
+}
+
+// ---------- 샵 / 장바구니 (Supabase cart_items 테이블) ----------
+const PRODUCTS = [
+  { id: 'keyring', emoji: '🍊', name: '감귤이 키링', price: 5900, q: 'tangerine orange fruit' },
+  { id: 'magnet', emoji: '🗿', name: '돌하르방 마그넷', price: 4500, q: 'dol hareubang jeju statue' },
+  { id: 'box', emoji: '📦', name: '제주 감귤 한 박스 (3kg)', price: 15900, q: 'tangerine orange tree' },
+  { id: 'postcard', emoji: '💌', name: '유채꽃 엽서 세트', price: 3900, q: 'canola flower field' },
+  { id: 'mug', emoji: '☕', name: '한라산 머그컵', price: 12000, q: 'hallasan mountain jeju' },
+  { id: 'tote', emoji: '👜', name: '바다 요정 에코백', price: 9800, q: 'jeju sea coast' },
+];
+const prod = id => PRODUCTS.find(p => p.id === id);
+const won = n => '₩' + Number(n).toLocaleString('ko-KR');
+let cart = [];
+const prodImg = {};
+
+function renderShop() {
+  $('#products').innerHTML = PRODUCTS.map(p => `<article class="product">
+    <div class="p-img">${prodImg[p.id] ? `<img src="${esc(prodImg[p.id])}" alt="${esc(p.name)}" loading="lazy" />` : placeholder(p.emoji)}</div>
+    <h3>${esc(p.name)}</h3><div class="price">${won(p.price)}</div>
+    <button class="btn primary small add-cart" data-id="${p.id}">🛒 담기</button></article>`).join('');
+}
+async function loadProductImages() {
+  await Promise.all(PRODUCTS.map(async p => { const [img] = await searchImages(p.q, 3); if (img) prodImg[p.id] = img.preview; }));
+  renderShop();
+}
+function renderCart() {
+  const rows = cart.filter(c => prod(c.product_id));
+  const count = rows.reduce((s, c) => s + c.quantity, 0), total = rows.reduce((s, c) => s + c.quantity * prod(c.product_id).price, 0);
+  $('#cart-count').textContent = count; $('#cart-count').classList.toggle('on', count > 0);
+  $('#cart-total').textContent = won(total);
+  $('#checkout').disabled = !rows.length; $('#cart-clear').disabled = !rows.length;
+  $('#cart-list').innerHTML = !user ? '<p class="note">로그인하면 장바구니를 쓸 수 있어요.</p>'
+    : rows.length ? rows.map(c => { const p = prod(c.product_id);
+        return `<div class="cart-row"><div class="c-img">${prodImg[p.id] ? `<img src="${esc(prodImg[p.id])}" alt="" />` : p.emoji}</div>
+          <div class="c-info"><b>${esc(p.name)}</b><span>${won(p.price)}</span>
+            <div class="qty"><button data-act="dec" data-id="${p.id}">−</button><em>${c.quantity}</em><button data-act="inc" data-id="${p.id}">＋</button></div></div>
+          <div class="c-side"><b>${won(p.price * c.quantity)}</b><button class="rm" data-act="rm" data-id="${p.id}" title="빼기">🗑</button></div></div>`; }).join('')
+      : '<p class="note">장바구니가 비어 있어요. 샵에서 담아 보세요!</p>';
+}
+async function loadCart() {
+  cart = []; $('#cart-note').textContent = '';
+  if (supabase && user) {
+    const { data, error } = await supabase.from('cart_items').select('*').order('created_at');
+    if (error) $('#cart-note').textContent = '장바구니 테이블이 아직 없어요. supabase/schema.sql 을 Supabase SQL Editor 에서 실행해 주세요.';
+    else cart = data;
+  }
+  renderCart();
+}
+const cartErr = () => toast('장바구니에 문제가 생겼어요. supabase/schema.sql 을 실행했는지 확인해 주세요.');
+async function addToCart(id) {
+  if (!user) { openAuth('login'); return; }
+  const row = cart.find(c => c.product_id === id);
+  const { error } = row
+    ? await supabase.from('cart_items').update({ quantity: Math.min(99, row.quantity + 1), updated_at: new Date().toISOString() }).eq('product_id', id)
+    : await supabase.from('cart_items').insert({ product_id: id, quantity: 1 });
+  if (error) { cartErr(); return; }
+  toast(`${prod(id).name} 을(를) 담았어요 🛒`); await loadCart();
+}
+async function setQty(id, q) {
+  const { error } = q < 1
+    ? await supabase.from('cart_items').delete().eq('product_id', id)
+    : await supabase.from('cart_items').update({ quantity: Math.min(99, q), updated_at: new Date().toISOString() }).eq('product_id', id);
+  if (error) cartErr(); else await loadCart();
+}
+async function clearCart() {
+  const { error } = await supabase.from('cart_items').delete().neq('product_id', '');
+  if (error) cartErr(); else { toast('장바구니를 비웠어요'); await loadCart(); }
+}
+function toggleCart(open) {
+  $('#cart-drawer').classList.toggle('open', open); $('#cart-overlay').classList.toggle('hidden', !open);
+  if (open && !user) openAuth('login');
 }
 
 // ---------- 갤러리 ----------
@@ -183,6 +255,16 @@ function wire() {
   $('#auth-cancel').onclick = () => $('#auth-dialog').close();
   $('#hero-join').onclick = () => (user ? document.getElementById('gallery').scrollIntoView({ behavior: 'smooth' }) : openAuth('signup'));
   $('#lounge-login').onclick = () => openAuth('login');
+  $('#cart-btn').onclick = () => toggleCart(true);
+  $('#cart-close').onclick = $('#cart-overlay').onclick = () => toggleCart(false);
+  $('#cart-clear').onclick = clearCart;
+  $('#checkout').onclick = () => toast('데모 상점이라 결제는 연결돼 있지 않아요. 주문 연동은 다음 단계에서! 🍊');
+  document.body.addEventListener('click', e => {
+    const add = e.target.closest('.add-cart'); if (add) { addToCart(add.dataset.id); return; }
+    const b = e.target.closest('#cart-list button[data-act]'); if (!b) return;
+    const row = cart.find(c => c.product_id === b.dataset.id); if (!row) return;
+    setQty(row.product_id, b.dataset.act === 'inc' ? row.quantity + 1 : b.dataset.act === 'dec' ? row.quantity - 1 : 0);
+  });
   document.body.addEventListener('click', e => {
     const heart = e.target.closest('.heart');
     if (heart) {
@@ -197,7 +279,7 @@ function wire() {
 }
 
 async function init() {
-  wire(); showNotice(); renderAuthArea(); renderFavs();
+  wire(); showNotice(); renderAuthArea(); renderFavs(); renderShop(); renderCart(); loadProductImages();
   loadHero(); loadCards(); selectTab(0);
   if (!hasSupabase) return;
   const { data } = await supabase.auth.getSession();

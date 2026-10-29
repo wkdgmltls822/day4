@@ -40,8 +40,30 @@ Vite + Supabase(회원가입/로그인/보관함) + Pixabay(사진) + Vercel(배
     - `https://내프로젝트.vercel.app`
     - `https://내프로젝트.vercel.app/**`
 
-### 1-3. 보관함(♥) 테이블 만들기
-**SQL Editor → New query** 에 아래를 붙여넣고 **Run** (한 번만)
+### 1-3. 테이블 만들기 (보관함 ♥ + 장바구니 🛒)
+가장 쉬운 방법: [`supabase/schema.sql`](supabase/schema.sql) 파일을 열어 **내용 전체**를 복사 →
+Supabase **SQL Editor → New query**(에디터를 `Ctrl+A` 로 비운 뒤) 붙여넣기 → **Run**.
+여러 번 실행해도 안전해요. (SQL Editor 에는 **SQL 문장만** 넣어야 해요. 한국어 문장을 넣으면 `syntax error` 가 나요.)
+
+장바구니 테이블만 따로 만들고 싶다면 이 구문만 실행하세요.
+```sql
+create table if not exists public.cart_items (
+  id bigint generated always as identity primary key,
+  user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  product_id text not null,
+  quantity int not null default 1 check (quantity between 1 and 99),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id, product_id)
+);
+alter table public.cart_items enable row level security;
+create policy "내 장바구니 보기"   on public.cart_items for select using (auth.uid() = user_id);
+create policy "내 장바구니에 담기" on public.cart_items for insert with check (auth.uid() = user_id);
+create policy "내 장바구니 수정"   on public.cart_items for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "내 장바구니 삭제"   on public.cart_items for delete using (auth.uid() = user_id);
+```
+
+보관함(♥) 테이블 구문은 아래와 같아요.
 
 ```sql
 create table if not exists public.favorites (
@@ -134,4 +156,5 @@ git push origin main
 | 인증 메일이 안 와요 | 스팸함 확인. 테스트 중이면 Confirm email 을 OFF. 무료 플랜은 시간당 메일 발송 수 제한이 있어요 |
 | 인증 링크가 localhost 로 열려요 | Site URL / Redirect URLs 에 Vercel 주소 추가 |
 | ♥ 누르면 "저장하지 못했어요" | 1-3 의 SQL 을 실행했는지 확인 |
+| 🛒 담기를 누르면 "장바구니에 문제가 생겼어요" | 1-3 의 `cart_items` SQL 을 실행했는지 확인 |
 | 사진 대신 이모지 타일만 보여요 | Pixabay 키 확인 (하루 요청 제한을 넘었을 수도 있어요) |
