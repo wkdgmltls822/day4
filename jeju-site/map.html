@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="제주도를 3D 로 탐험해요 - 한라산, 오름, 올레길, 항·포구, 감귤재배지, 풍력발전기, 등대, 돌하르방" />
+  <title>3D 제주 지도 🗺️ 제주 감귤이 월드</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div id="stage"></div>
+  <div id="labels"></div>
+
+  <aside id="panel">
+    <a class="back" href="/">← 제주 감귤이 월드</a>
+    <h1>🗺️ 3D 제주 지도</h1>
+    <p class="hint">드래그 회전 · 휠 확대/축소 · 우클릭(두 손가락) 이동 · 마커를 눌러 보세요</p>
+    <div class="group"><h3>보기 선택</h3><div id="layers"></div></div>
+    <div class="group"><h3>바로 가기</h3><div id="presets" class="presets"></div></div>
+    <label class="chk"><input type="checkbox" id="autorot" /> 🔄 자동 회전</label>
+  </aside>
+
+  <section id="viz" class="viz">
+    <h3>📊 서귀포시 직영관광지 방문객</h3>
+    <p id="viz-status" class="viz-status">불러오는 중…</p>
+    <div id="viz-controls" class="viz-controls hidden">
+      <select id="viz-year"></select><select id="viz-month"></select>
+      <button id="viz-play">▶ 월별 재생</button>
+    </div>
+  </section>
+
+  <aside id="info" class="info hidden">
+    <button id="info-close" aria-label="닫기">✕</button>
+    <div id="info-body"></div>
+  </aside>
+
+  <div id="tip" class="tip hidden"></div>
+  <div id="loader" class="loader"><div id="loader-text">🌋 제주 지형을 불러오는 중…</div><div class="bar"><i id="loader-bar"></i></div></div>
+  <footer class="credit">지형: AWS Terrain Tiles(Terrarium) · 방문객: 공공데이터포털(서귀포시 직영관광지 관람객수) · 마커 위치는 대략적이에요</footer>
+
+  <script type="module" src="/src/map/map.js"></script>
+</body>
+</html>
