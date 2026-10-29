@@ -2,6 +2,7 @@ import './map.css';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { loadDEM, buildTerrain, coastRing } from './terrain.js';
+import { buildWater } from './water.js';
 import { LAYERS, PLACES, PRESETS } from './landmarks.js';
 import { turbine, lighthouse, hareubang, pin, flag, port, citrusGrove } from './models.js';
 
@@ -25,15 +26,8 @@ controls.autoRotateSpeed = 0.6;
 scene.add(new THREE.HemisphereLight(0xdff2ff, 0x4a5a3a, 1.25));
 const sun = new THREE.DirectionalLight(0xfff1d0, 2.4); sun.position.set(-60, 90, 40); scene.add(sun);
 
-// 바다: 반투명 평면 + 천천히 흐르는 물결무늬
-const waterTex = (() => {
-  const c = document.createElement('canvas'); c.width = c.height = 256; const g = c.getContext('2d');
-  g.fillStyle = '#2f9be6'; g.fillRect(0, 0, 256, 256); g.strokeStyle = 'rgba(255,255,255,.28)'; g.lineWidth = 2;
-  for (let i = 0; i < 26; i++) { const x = Math.random() * 256, y = Math.random() * 256; g.beginPath(); g.arc(x, y, 6 + Math.random() * 12, Math.PI * 1.1, Math.PI * 1.9); g.stroke(); }
-  const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(70, 70); t.colorSpace = THREE.SRGBColorSpace; return t;
-})();
-const water = new THREE.Mesh(new THREE.PlaneGeometry(520, 520), new THREE.MeshStandardMaterial({ map: waterTex, transparent: true, opacity: 0.94, roughness: 0.25, metalness: 0.1 }));
-water.rotation.x = -Math.PI / 2; water.position.y = 0.012; scene.add(water);
+// 바다는 지형을 불러온 뒤 water.js 의 셰이더로 만든다 (init 참고)
+let water = null;
 
 // ---------- 레이어 ----------
 const groups = {}; LAYERS.forEach(l => { groups[l.id] = new THREE.Group(); scene.add(groups[l.id]); });
@@ -230,7 +224,7 @@ function frame() {
   anim.rings.forEach((r, i) => { r.scale.setScalar(1 + Math.sin(t * 2 + i) * 0.06); });
   anim.flags.forEach((f, i) => { f.userData.cloth.rotation.y = Math.sin(t * 4 + i) * 0.4; });
   walkers.forEach(w => { w.userData.t = (w.userData.t + dt * 0.012) % 1; if (olleCurve) w.position.copy(olleCurve.getPointAt(w.userData.t)).y += 0.1; });
-  waterTex.offset.set(t * 0.004, t * 0.002);
+  if (water) water.material.uniforms.uTime.value = t;
   viz.bars.forEach(b => {
     b.cur += (b.target - b.cur) * Math.min(1, dt * 4); b.mesh.scale.y = b.cur;
     b.top.set(b.mesh.position.x, b.mesh.position.y + b.cur + 0.4, b.mesh.position.z);
@@ -247,6 +241,7 @@ function frame() {
   try {
     const dem = await loadDEM(p => { bar.style.width = Math.round(p * 80) + '%'; });
     const { mesh, world: w } = buildTerrain(dem); world = w; scene.add(mesh);
+    water = buildWater(dem, world, sun.position, SKY, scene.fog.density); scene.add(water);
     bar.style.width = '92%';
     buildOlle(dem); buildPlaces(); buildBars(); buildUI();
     window.__jeju = { world, markers, viz, select, scene, camera, controls, dem, refreshBars };
